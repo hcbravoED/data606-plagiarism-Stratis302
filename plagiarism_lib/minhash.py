@@ -69,45 +69,41 @@ def _make_minhash_sigmatrix(shingled_data, num_hashes, inverted=False):
     
     # iterate over shingles 
     for s, docid in inv_index:
+        x = []
+        print('s:', s) 
+        print('docid:', docid)     
+        ## print(inv_index) ##this and the two before are to check if they are ordered, runs out of space
+        ##loop the rows, then the columns
+        ##check if s is the same as it was before
+        ##First thing. If you see a new shingle, compute the hash values, evaluate each one in hash_funcs with the value given in s
+        ##List of hash values for one shingle
+        ##Update when you see a new shingle
+        ##Check for each document, is the value for that document and that hash value in the signature matrix smaller than the one
+        ##just computed. If yes, do nothing, if no, update the signature matrix
+        ##Other function that needs to be implemented. The one to compute similarity
+        
             
         ## IMPLEMENT THIS LOOP!!!
-            ##if we have already been through this shingle, skip it
-            hashvals.clear()
-            if s == last_s:
-                last_s = s
-            ##if we haven't been through this shingle yet, then put it through the hash functions, the hash values of this shingle in the
-            ##hash functions are placed in the list hashvals[]
-            else:
-                for i in range(num_hashes):
-                    #current_hash = hash_funcs[i]#is this necessary?
-                    hashvals = [h(s) for h in hash_funcs]
-                    last_s = s
-                
-                ##put the hashvals in sigmatrix, if necessary
-                for i in range(num_docs):
-                    if docid == docids[i]:
-                        for j in range(num_hashes):
-                            if sigmat[j, i] == np.inf:
-                                sigmat[j, i] = hashvals[j]
-                            if hashvals[j] < sigmat[j, i]:
-                                sigmat[j, i] = hashvals[j]
-            
-        ##shingled_data is a list of all shingles, with all documents they appear in. Characteristic matrix
-        ##loop through input, have shingles and id of document it appeared in. You see all tuples for a given shingle in a row.
-        ##sigmat is the sigma matrix
-        ##this is essentially the first 2 loops of the pseudocode
-        ##pseudocode iterates over shingles. then loop through the columns
-        ##the loop iterates over those pairs
-        ##this loop essentially corresponds to the bottom of the screenshot
-        ##it's a particular shingle, it's a document in which the shingle occurs
-        ##check, for each hash value, if you need to update the matrix
+        ##if we have already been through this shingle, skip it
+        if s != last_s:
+            hashvals.clear() ##this still contains the values from the prior shingle (possibly nothing if it's the first shingle)
+            hashvals = [h(s) for h in hash_funcs] ##we know it works
+            last_s = s ##need to set last_s to what it is now. s will retain is value until the end of this iteration of the loop
+      
+
+        for k in range(len(docids)):
+            if docid == docids[k]:
+                x.append(docids.index(docid)) ##this loop is to find and store the index of docid
         
-        ##if you see a new shingle, compute its hash values, this is what hash_funcs is, a list of hash functions
-        ##evaluate all hash functions in hash_funcs with the value given in s. Gives a list of hash values for that shingle
-        ##every time you see a new shingle, update hash_vals
-        ##for each document you check in order for each of the hash values, is the current value for that document and that hash function
-        ##currently in the signature matrix smaller than the value just computed. If it is, it becomes the new value for that signature 
-        ##matrix. If not, do nothing
+        y = x[0] ##to put the index of docid in an acceptable format
+        for j in range(num_hashes): ##will go through the rows
+            if sigmat[j, y] == np.inf: ##the two if statements should adjust the columns accordingly
+                sigmat[j, y] = hashvals[j]
+            if hashvals[j] < sigmat[j, y]:
+                sigmat[j, y] = hashvals[j]
+                  
+        x.clear() ##we need a different index for the next docid
+        print(sigmat)
         
     return sigmat, docids
 
@@ -144,18 +140,22 @@ class MinHash:
     #
     # returns: minhash JS estimate (double)
     def get_similarity(self, di, dj):
-        i = self._docids.index(di)
-        j = self._docids.index(dj)
+        i = self._docids.index(di) ##docids position corresponding to id number di
+        j = self._docids.index(dj) ##docids position corresponding to id number dj
         # FINISH IMPLEMENTING THIS!!!
         ## function to compute similarity
-        ##with a minhash sigmatrix, estimate similarity by comparing 2 columns of sigmatrix, see how many match
+        ##with a minhash sigmatrix, estimate similarity by comparing 2 columns of sigmatrix, see how many elements match
         ##return proportion of those that match
-        l = 0
-        for k in range(self._num_hashes):
-            if self._mat[k][i] == self._mat[k][j]:
-                l = l+1
-
-        return (l/self._num_hashes)
+        x = i
+        y = j ##these two statements are to put the indexes of di and dj into an acceptable format
+        
+        s1 = []
+        s2 = []
+        for k in range(self._num_hashes):  ##this is to copy the columns into 2 separate lists  
+            s1[k] = self._mat[k, x]
+            s2[k] = self._mat[k, y]
+   
+        return (len(s1.intersection(s2))/len(s1.union(s2)))
     
     def save_matrix(self, file):
         np.save(file, self._mat)
