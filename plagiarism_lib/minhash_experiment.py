@@ -68,7 +68,7 @@ def run(exp_data, exp_df, hash_vals=[10,20,50,100,1000]):
     for num_hash in hash_vals:
         print("Doing minhash for ", num_hash, " hashes")
         
-        # compute minhahs signature matrix
+        # compute minhash signature matrix
         mh = MinHash(num_hash)
         mh.make_matrix(inv_data, inverted=True)
         

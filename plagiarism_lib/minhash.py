@@ -69,8 +69,45 @@ def _make_minhash_sigmatrix(shingled_data, num_hashes, inverted=False):
     
     # iterate over shingles 
     for s, docid in inv_index:
-        
+            
         ## IMPLEMENT THIS LOOP!!!
+            ##if we have already been through this shingle, skip it
+            hashvals.clear()
+            if s == last_s:
+                last_s = s
+            ##if we haven't been through this shingle yet, then put it through the hash functions, the hash values of this shingle in the
+            ##hash functions are placed in the list hashvals[]
+            else:
+                for i in range(num_hashes):
+                    #current_hash = hash_funcs[i]#is this necessary?
+                    hashvals = [h(s) for h in hash_funcs]
+                    last_s = s
+                
+                ##put the hashvals in sigmatrix, if necessary
+                for i in range(num_docs):
+                    if docid == docids[i]:
+                        for j in range(num_hashes):
+                            if sigmat[j, i] == np.inf:
+                                sigmat[j, i] = hashvals[j]
+                            if hashvals[j] < sigmat[j, i]:
+                                sigmat[j, i] = hashvals[j]
+            
+        ##shingled_data is a list of all shingles, with all documents they appear in. Characteristic matrix
+        ##loop through input, have shingles and id of document it appeared in. You see all tuples for a given shingle in a row.
+        ##sigmat is the sigma matrix
+        ##this is essentially the first 2 loops of the pseudocode
+        ##pseudocode iterates over shingles. then loop through the columns
+        ##the loop iterates over those pairs
+        ##this loop essentially corresponds to the bottom of the screenshot
+        ##it's a particular shingle, it's a document in which the shingle occurs
+        ##check, for each hash value, if you need to update the matrix
+        
+        ##if you see a new shingle, compute its hash values, this is what hash_funcs is, a list of hash functions
+        ##evaluate all hash functions in hash_funcs with the value given in s. Gives a list of hash values for that shingle
+        ##every time you see a new shingle, update hash_vals
+        ##for each document you check in order for each of the hash values, is the current value for that document and that hash function
+        ##currently in the signature matrix smaller than the value just computed. If it is, it becomes the new value for that signature 
+        ##matrix. If not, do nothing
         
     return sigmat, docids
 
@@ -110,7 +147,15 @@ class MinHash:
         i = self._docids.index(di)
         j = self._docids.index(dj)
         # FINISH IMPLEMENTING THIS!!!
-        return 0.5
+        ## function to compute similarity
+        ##with a minhash sigmatrix, estimate similarity by comparing 2 columns of sigmatrix, see how many match
+        ##return proportion of those that match
+        l = 0
+        for k in range(self._num_hashes):
+            if self._mat[k][i] == self._mat[k][j]:
+                l = l+1
+
+        return (l/self._num_hashes)
     
     def save_matrix(self, file):
         np.save(file, self._mat)
