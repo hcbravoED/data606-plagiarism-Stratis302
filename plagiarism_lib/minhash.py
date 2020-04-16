@@ -69,41 +69,20 @@ def _make_minhash_sigmatrix(shingled_data, num_hashes, inverted=False):
     
     # iterate over shingles 
     for s, docid in inv_index:
-        x = []
-        print('s:', s) 
-        print('docid:', docid)     
-        ## print(inv_index) ##this and the two before are to check if they are ordered, runs out of space
-        ##loop the rows, then the columns
-        ##check if s is the same as it was before
-        ##First thing. If you see a new shingle, compute the hash values, evaluate each one in hash_funcs with the value given in s
-        ##List of hash values for one shingle
-        ##Update when you see a new shingle
-        ##Check for each document, is the value for that document and that hash value in the signature matrix smaller than the one
-        ##just computed. If yes, do nothing, if no, update the signature matrix
-        ##Other function that needs to be implemented. The one to compute similarity
         
-            
         ## IMPLEMENT THIS LOOP!!!
-        ##if we have already been through this shingle, skip it
+        ##if the hash functions have already been applied to this shingle, skip it
         if s != last_s:
-            hashvals.clear() ##this still contains the values from the prior shingle (possibly nothing if it's the first shingle)
-            hashvals = [h(s) for h in hash_funcs] ##we know it works
-            last_s = s ##need to set last_s to what it is now. s will retain is value until the end of this iteration of the loop
+            hashvals.clear() 
+            hashvals = [h(s) for h in hash_funcs]
+            last_s = s 
       
 
-        for k in range(len(docids)):
-            if docid == docids[k]:
-                x.append(docids.index(docid)) ##this loop is to find and store the index of docid
+        y = docids.index(docid) ##this loop is to find and store the index of docid
         
-        y = x[0] ##to put the index of docid in an acceptable format
         for j in range(num_hashes): ##will go through the rows
-            if sigmat[j, y] == np.inf: ##the two if statements should adjust the columns accordingly
-                sigmat[j, y] = hashvals[j]
             if hashvals[j] < sigmat[j, y]:
                 sigmat[j, y] = hashvals[j]
-                  
-        x.clear() ##we need a different index for the next docid
-        print(sigmat)
         
     return sigmat, docids
 
@@ -146,16 +125,14 @@ class MinHash:
         ## function to compute similarity
         ##with a minhash sigmatrix, estimate similarity by comparing 2 columns of sigmatrix, see how many elements match
         ##return proportion of those that match
-        x = i
-        y = j ##these two statements are to put the indexes of di and dj into an acceptable format
-        
-        s1 = []
-        s2 = []
-        for k in range(self._num_hashes):  ##this is to copy the columns into 2 separate lists  
-            s1[k] = self._mat[k, x]
-            s2[k] = self._mat[k, y]
    
-        return (len(s1.intersection(s2))/len(s1.union(s2)))
+        counter = 0
+        for k in range(self._num_hashes):  ##this is to copy the columns into 2 separate lists  
+            if self._mat[k, i] == self._mat[k, j]:
+                counter = counter + 1
+        
+   
+        return (counter/self._num_hashes)
     
     def save_matrix(self, file):
         np.save(file, self._mat)
